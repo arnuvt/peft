@@ -152,6 +152,7 @@ TRANSFORMERS_MODELS_TO_ADALORA_TARGET_MODULES_MAPPING = {
 
 TRANSFORMERS_MODELS_TO_LORTA_TARGET_MODULES_MAPPING = {
     "llama": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    "esm2_35M": ["q_proj", "k_proj", "v_proj", "o_proj"],
     "roberta": ["query", "key", "value", "attention.output.dense"],
 }
 
@@ -162,6 +163,7 @@ TRANSFORMERS_MODELS_TO_LORTA_PREFIX_MAPPING = {
 
 TRANSFORMERS_MODELS_TO_LORTA_QKVO_MAPPING = {
     "llama": {"q": "self_attn.q_proj", "k": "self_attn.k_proj", "v": "self_attn.v_proj", "o": "self_attn.o_proj"},
+    "esm2_35M": {"q": "self_attn.q_proj", "k": "self_attn.k_proj", "v": "self_attn.v_proj", "o": "self_attn.o_proj"},
     "roberta": {
         "q": "attention.self.query",
         "k": "attention.self.key",

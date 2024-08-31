@@ -131,6 +131,7 @@ class LorTaModel(BaseTuner):
     prefix: str = "lora_"
 
     def __init__(self, model, config, adapter_name) -> None:
+        self.tensor_weights = model.state_dict()
         super().__init__(model, config, adapter_name)
 
     def _map_layer_to_adapter(self, layer_idx: int, target_matrix: str) -> str:
@@ -141,7 +142,7 @@ class LorTaModel(BaseTuner):
         # print("*"*100)
         # print(self.adapter_name_to_module)
         # print("*"*100)
-        for block_idx in range(self.model.config.num_hidden_layers):
+        for block_idx in range(self.model.config["num_hidden_layers"]):
             weights[self._map_layer_to_adapter(block_idx, "q")] = torch.cat(
                 [
                     self.model.lora_A
@@ -149,7 +150,7 @@ class LorTaModel(BaseTuner):
                         self.model.lora_C_h[head_idx] * self.model.lora_C_m[0] * self.model.lora_C_l[block_idx]
                     )
                     @ self.model.lora_B
-                    for head_idx in range(self.model.config.num_attention_heads)
+                    for head_idx in range(self.model.config["num_attention_heads"])
                 ],
                 dim=1,
             )
@@ -160,7 +161,7 @@ class LorTaModel(BaseTuner):
                         self.model.lora_C_h[head_idx] * self.model.lora_C_m[1] * self.model.lora_C_l[block_idx]
                     )
                     @ self.model.lora_B
-                    for head_idx in range(self.model.config.num_attention_heads)
+                    for head_idx in range(self.model.config["num_attention_heads"])
                 ],
                 dim=1,
             )
@@ -171,7 +172,7 @@ class LorTaModel(BaseTuner):
                         self.model.lora_C_h[head_idx] * self.model.lora_C_m[2] * self.model.lora_C_l[block_idx]
                     )
                     @ self.model.lora_B
-                    for head_idx in range(self.model.config.num_attention_heads)
+                    for head_idx in range(self.model.config["num_attention_heads"])
                 ],
                 dim=1,
             )
@@ -182,7 +183,7 @@ class LorTaModel(BaseTuner):
                         self.model.lora_C_h[head_idx] * self.model.lora_C_m[3] * self.model.lora_C_l[block_idx]
                     )
                     @ self.model.lora_B
-                    for head_idx in range(self.model.config.num_attention_heads)
+                    for head_idx in range(self.model.config["num_attention_heads"])
                 ],
                 dim=1,
             )
@@ -294,13 +295,13 @@ class LorTaModel(BaseTuner):
                 model.modules_to_save = set(peft_config.modules_to_save)
             else:
                 model.modules_to_save.update(set(peft_config.modules_to_save))
-        head_dim = self.model.config.hidden_size // self.model.config.num_attention_heads
-        A_shape = (self.model.config.hidden_size, peft_config.r)
+        head_dim = self.model.config["hidden_size"] // self.model.config["num_attention_heads"]
+        A_shape = (self.model.config["hidden_size"], peft_config.r)
         B_shape = (peft_config.r, head_dim)
         C_shape = (peft_config.r,)
-        self.model.lora_C_l = nn.Parameter(torch.zeros((self.model.config.num_hidden_layers,) + C_shape))
+        self.model.lora_C_l = nn.Parameter(torch.zeros((self.model.config["num_hidden_layers"],) + C_shape))
         nn.init.kaiming_uniform_(self.model.lora_C_l, a=math.sqrt(5) * peft_config.init_scale)
-        self.model.lora_C_h = nn.Parameter(torch.zeros((self.model.config.num_attention_heads,) + C_shape))
+        self.model.lora_C_h = nn.Parameter(torch.zeros((self.model.config["num_attention_heads"],) + C_shape))
         nn.init.kaiming_uniform_(self.model.lora_C_h, a=math.sqrt(5) * peft_config.init_scale)
         self.model.lora_C_m = nn.Parameter(torch.zeros((4,) + C_shape))
         nn.init.kaiming_uniform_(self.model.lora_C_m, a=math.sqrt(5) * peft_config.init_scale)
@@ -322,7 +323,7 @@ class LorTaModel(BaseTuner):
     def weights_pre_forward_hook(self, target, args, kwargs, module_name):
         # pre-forward hook to inject weights
         # print(self.tensor_weights.keys())
-        kwargs["adapter_weight"] = self.tensor_weights[module_name]
+        kwargs["adapter_weight"] = self.tensor_weights[f'{module_name}.base_layer.weight']
         return args, kwargs
 
     def _check_new_adapter_config(self, config: LorTaConfig) -> None:
