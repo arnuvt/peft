@@ -193,7 +193,7 @@ class LorTaModel(BaseTuner):
         # print("*"*100)
         # print(self.tensor_weights.keys())
         # kwargs["adapter_weight"] = weights
-        return self.model.forward(*args, **kwargs)
+        return self.model.forward(input_ids = kwargs["input_ids"], output_hidden_states = kwargs["output_hidden_states"])
 
     def inject_adapter(self, model: nn.Module, adapter_name: str):
         r"""
