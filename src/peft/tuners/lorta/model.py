@@ -131,7 +131,6 @@ class LorTaModel(BaseTuner):
     prefix: str = "lora_"
 
     def __init__(self, model, config, adapter_name) -> None:
-        self.tensor_weights = model.state_dict()
         super().__init__(model, config, adapter_name)
 
     def _map_layer_to_adapter(self, layer_idx: int, target_matrix: str) -> str:
@@ -323,7 +322,7 @@ class LorTaModel(BaseTuner):
     def weights_pre_forward_hook(self, target, args, kwargs, module_name):
         # pre-forward hook to inject weights
         # print(self.tensor_weights.keys())
-        kwargs["adapter_weight"] = self.tensor_weights[f'{module_name}.base_layer.weight']
+        kwargs["adapter_weight"] = self.tensor_weights[module_name]
         return args, kwargs
 
     def _check_new_adapter_config(self, config: LorTaConfig) -> None:
